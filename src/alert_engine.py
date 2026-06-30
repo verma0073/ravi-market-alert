@@ -1,21 +1,20 @@
-class AlertEngine:
+def check_alerts(correction: float, levels: list, triggered: list):
+    """
+    Returns newly triggered alert levels based on correction percentage.
 
-    def __init__(self, state_manager):
-        self.state = state_manager
+    Args:
+        correction: current drawdown percentage
+        levels: configured alert thresholds (e.g. [5, 10, 15])
+        triggered: already triggered levels
 
-    def calculate_correction(self, current_close, highest_close):
-        if highest_close == 0:
-            return 0
+    Returns:
+        list of newly triggered levels
+    """
 
-        return ((highest_close - current_close) / highest_close) * 100
+    new_alerts = []
 
-    def check_alerts(self, correction, levels):
+    for level in levels:
+        if correction >= level and level not in triggered:
+            new_alerts.append(level)
 
-        triggered = []
-
-        for level in levels:
-
-            if correction >= level and not self.state.is_alert_sent(level):
-                triggered.append(level)
-
-        return triggered
+    return new_alerts

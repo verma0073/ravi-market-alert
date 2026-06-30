@@ -1,41 +1,35 @@
 import json
-from pathlib import Path
+import os
+from typing import Dict, Any
+
+STATE_FILE = "data/state.json"
 
 
-class StateManager:
+def load_state() -> Dict[str, Any]:
+    """
+    Load persisted state from disk.
+    Returns empty dict if no state exists.
+    """
+    if not os.path.exists(STATE_FILE):
+        return {}
 
-    def __init__(self):
-        self.state_file = Path("data/state.json")
+    try:
+        with open(STATE_FILE, "r") as f:
+            return json.load(f)
+    except json.JSONDecodeError:
+        # If file is corrupted, reset state safely
+        return {}
 
-        # Create state.json if it doesn't exist
-        if not self.state_file.exists():
-            self.state = {
-                "highest_close": 0,
-                "alerts_sent": {}
-            }
-            self.save()
-        else:
-            self.load()
 
-    def load(self):
-        with open(self.state_file, "r") as file:
-            self.state = json.load(file)
+def save_state(state: Dict[str, Any]) -> None:
+    """
+    Save state atomically to avoid corruption.
+    """
+    os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
 
-    def save(self):
-        with open(self.state_file, "w") as file:
-            json.dump(self.state, file, indent=4)
+    temp_file = STATE_FILE + ".tmp"
 
-    def get_highest_close(self):
-        return self.state["highest_close"]
+    with open(temp_file, "w") as f:
+        json.dump(state, f, indent=2)
 
-    def set_highest_close(self, value):
-        self.state["highest_close"] = value
-
-    def is_alert_sent(self, level):
-        return self.state["alerts_sent"].get(str(level), False)
-
-    def mark_alert_sent(self, level):
-        self.state["alerts_sent"][str(level)] = True
-
-    def reset_alerts(self):
-        self.state["alerts_sent"] = {}
+    os.replace(temp_file, STATE_FILE)

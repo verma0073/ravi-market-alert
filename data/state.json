@@ -1,4 +1,8 @@
 {
-    "highest_close": 26328.55078125,
-    "alerts_sent": {}
+  "highest_close": 26328.55078125,
+  "alerts_sent": {},
+  "last_close": 23946.900390625,
+  "triggered_levels": [
+    5
+  ]
 }

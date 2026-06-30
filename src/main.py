@@ -1,45 +1,62 @@
-from config import Config
-from market import Market
-from state_manager import StateManager
-from alert_engine import AlertEngine
+from config import load_config
+from market import get_market_data
+from alert_engine import check_alerts
+from notifier import send_notification
+from state_manager import load_state, save_state
 
-config = Config()
-market = Market(config.symbol)
-state = StateManager()
 
-current = market.get_latest_close(config.lookback_days)
-highest = market.get_highest_close(config.lookback_days)
+def main():
+    # Load config
+    config = load_config()
 
-if highest > state.get_highest_close():
-    state.set_highest_close(highest)
-    state.reset_alerts()
-    state.save()
+    symbol = config["market"]["symbol"]
+    levels = config["alerts"]["levels"]
 
-stored_high = state.get_highest_close()
+    print("============================================================")
+    print(f"Market            : {symbol}")
 
-engine = AlertEngine(state)
+    # Load previous state
+    state = load_state()
 
-correction = engine.calculate_correction(
-    current,
-    stored_high
-)
+    # Fetch market data
+    data = get_market_data(symbol)
 
-print("=" * 60)
-print(f"Market            : {config.symbol}")
-print(f"Current Close     : {current:,.2f}")
-print(f"Highest Close     : {stored_high:,.2f}")
-print(f"Correction        : {correction:.2f}%")
-print("=" * 60)
+    current_close = data["current_close"]
+    highest_close = max(data["historical_high"], state.get("highest_close", 0))
 
-alerts = engine.check_alerts(
-    correction,
-    config.levels
-)
+    # Update state
+    state["highest_close"] = highest_close
+    state["last_close"] = current_close
 
-if alerts:
-    print("\nAlerts Triggered")
+    # Calculate correction
+    correction = ((highest_close - current_close) / highest_close) * 100
 
-    for level in alerts:
-        print(f"✅ {level}% correction reached")
-else:
-    print("\nNo alerts.")
+    print(f"Current Close     : {current_close:,.2f}")
+    print(f"Highest Close     : {highest_close:,.2f}")
+    print(f"Correction        : {correction:.2f}%")
+    print("============================================================")
+
+    # Check alerts
+    triggered = state.get("triggered_levels", [])
+
+    alerts = check_alerts(correction, levels, triggered)
+
+    if alerts:
+        print("\nAlerts Triggered")
+        for alert in alerts:
+            print(f"✅ {alert}% correction reached")
+            send_notification(f"Nifty Correction Alert: {alert}% reached")
+
+        # update triggered levels
+        triggered.extend(alerts)
+        state["triggered_levels"] = list(set(triggered))
+
+    else:
+        print("\nNo new alerts triggered")
+
+    # Save updated state
+    save_state(state)
+
+
+if __name__ == "__main__":
+    main()

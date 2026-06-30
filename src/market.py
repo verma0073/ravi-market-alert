@@ -1,29 +1,23 @@
 import yfinance as yf
 
 
-class Market:
+def get_market_data(symbol: str):
+    """
+    Fetch latest market data and historical high.
+    """
 
-    def __init__(self, symbol: str):
-        self.symbol = symbol
+    ticker = yf.Ticker(symbol)
 
-    def get_history(self, days: int):
-        ticker = yf.Ticker(self.symbol)
-        return ticker.history(period=f"{days}d")
+    # Get last 1 year data
+    hist = ticker.history(period="1y")
 
-    def get_latest_close(self, days: int = 365):
+    if hist.empty:
+        raise Exception(f"No market data found for symbol: {symbol}")
 
-        history = self.get_history(days)
+    current_close = float(hist["Close"].iloc[-1])
+    historical_high = float(hist["Close"].max())
 
-        if history.empty:
-            raise Exception("No market data received.")
-
-        return float(history["Close"].iloc[-1])
-
-    def get_highest_close(self, days: int = 365):
-
-        history = self.get_history(days)
-
-        if history.empty:
-            raise Exception("No market data received.")
-
-        return float(history["Close"].max())
+    return {
+        "current_close": current_close,
+        "historical_high": historical_high
+    }
