@@ -3,11 +3,9 @@
         "symbol": "^NSEI",
         "lookback_days": 365
     },
-
     "alerts": {
         "levels": [5, 10, 15]
     },
-
     "notification": {
         "provider": "ntfy"
     }

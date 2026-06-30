@@ -3,14 +3,16 @@ from pathlib import Path
 
 
 class Config:
+
     def __init__(self):
         config_file = Path("config.json")
 
-        if not config_file.exists():
-            raise FileNotFoundError("config.json not found")
+        print("Reading config from:", config_file.resolve())
 
         with open(config_file, "r") as file:
             self.data = json.load(file)
+
+        print("Loaded config:", self.data)
 
     @property
     def symbol(self):
