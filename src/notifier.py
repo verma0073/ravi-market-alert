@@ -6,7 +6,7 @@ def send_notification(message: str):
     Sends notification via ntfy.sh
     """
 
-    topic = "ravi-market-alert"  # you can change this
+    topic = "ravi-nifty-alert"  # you can change this
     url = f"https://ntfy.sh/{topic}"
 
     try:
