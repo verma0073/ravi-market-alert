@@ -17,4 +17,6 @@ jobs:
         with:
           python-version: "3.11"
 
-      - run: python your_script.py
+      - run: |
+          pip install -r requirements.txt
+          python src/main.py
